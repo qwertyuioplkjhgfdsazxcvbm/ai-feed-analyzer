@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Feed Analyzer</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .hero-section {
+            background: #007bff;
+            color: white;
+            padding: 60px 0;
+            border-radius: 0 0 30px 30px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            transition: 0.3s;
+            margin-bottom: 25px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        }
+
+        .badge-category {
+            background-color: #e7f1ff;
+            color: #007bff;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="hero-section text-center mb-5 shadow">
+    <div class="container">
+        <h1 class="display-5 fw-bold">🚀 AI Content Intelligence</h1>
+        <p class="lead">Parsing RSS feeds into structured insights</p>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- 🔍 Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <form method="POST" class="input-group input-group-lg shadow-sm mb-4" id="analyzerForm">
+                <input type="text" name="rss_url" class="form-control"
+                       placeholder="Paste RSS URL (e.g. https://techcrunch.com/feed/)" required>
+
+                <button class="btn btn-dark px-4" type="submit" id="btnSubmit">
+                    <span id="btnText">Analyze</span>
+                    <div id="spinner" class="spinner-border spinner-border-sm d-none"></div>
+                </button>
+            </form>
+
+            <h4 class="mb-4">Top Analyzed Articles</h4>
+
+            <!-- ❗ Empty state -->
+            {% if articles|length == 0 %}
+                <div class="text-center text-muted">
+                    <p>No articles yet. Enter an RSS feed to begin.</p>
+                </div>
+            {% endif %}
+
+            <!-- 📄 Articles -->
+            {% for article in articles %}
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+
+                    <span class="badge badge-category mb-2 me-2">
+                        {{ article.category }}
+                    </span>
+
+                    <h3 class="h4">
+                        <a href="{{ article.link }}" target="_blank"
+                           class="text-decoration-none text-dark fw-bold">
+                            {{ article.title }}
+                        </a>
+                    </h3>
+
+                    <p class="text-muted mt-3">
+                        {{ article.summary }}
+                    </p>
+
+                    <!-- 🏷 Tags -->
+                    <div class="mt-2">
+                        {% for tag in article.tags.split(',') %}
+                            <span class="badge bg-light text-dark me-1">
+                                {{ tag }}
+                            </span>
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+</div>
+
+<!-- 🔻 Footer -->
+<footer class="text-center mt-5 text-muted">
+    <small>Built with Flask | AI-ready architecture</small>
+</footer>
+
+<!-- ⚡ Loading Script -->
+<script>
+document.getElementById('analyzerForm').onsubmit = function() {
+    document.getElementById('btnText').innerText = "Analyzing...";
+    document.getElementById('spinner').classList.remove('d-none');
+    document.getElementById('btnSubmit').disabled = true;
+};
+</script>
+
+</body>
+</html>
