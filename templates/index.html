@@ -1,129 +1,372 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Feed Analyzer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feed Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    :root {
+      --ink:       #1a1a18;
+      --ink-2:     #5a5a56;
+      --ink-3:     #9a9a94;
+      --paper:     #faf9f6;
+      --surface:   #f2f1ed;
+      --border:    rgba(26,26,24,0.12);
+      --border-md: rgba(26,26,24,0.22);
+      --sans:      'DM Sans', system-ui, sans-serif;
+      --serif:     'DM Serif Display', Georgia, serif;
+    }
 
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', sans-serif;
-        }
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
 
-        .hero-section {
-            background: #007bff;
-            color: white;
-            padding: 60px 0;
-            border-radius: 0 0 30px 30px;
-        }
+    .masthead {
+      border-bottom: 1px solid var(--border);
+      padding: 18px 0 16px;
+      text-align: center;
+    }
+    .masthead-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 6px;
+    }
+    .masthead-title {
+      font-family: var(--serif);
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 400;
+      line-height: 1.1;
+    }
+    .masthead-sub {
+      font-size: 13px;
+      color: var(--ink-3);
+      margin-top: 6px;
+    }
 
-        .card {
-            border: none;
-            border-radius: 15px;
-            transition: 0.3s;
-            margin-bottom: 25px;
-        }
+    .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-        }
+    /* RSS form */
+    .rss-wrap { padding: 28px 0 24px; border-bottom: 1px solid var(--border); }
+    .rss-row {
+      display: flex;
+      border: 1px solid var(--border-md);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .rss-row:focus-within {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(26,26,24,0.07);
+    }
+    .rss-row input {
+      flex: 1; border: none; outline: none; background: transparent;
+      padding: 13px 16px; font-family: var(--sans); font-size: 14px; color: var(--ink);
+    }
+    .rss-row input::placeholder { color: var(--ink-3); }
+    .rss-row button {
+      border: none; border-left: 1px solid var(--border-md);
+      background: var(--ink); color: #fff;
+      font-family: var(--sans); font-size: 13px; font-weight: 500; letter-spacing: 0.04em;
+      padding: 0 22px; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.15s; white-space: nowrap;
+    }
+    .rss-row button:hover { background: #2d2d2a; }
+    .rss-row button:disabled { background: var(--ink-3); cursor: not-allowed; }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-        .badge-category {
-            background-color: #e7f1ff;
-            color: #007bff;
-            font-weight: 600;
-        }
-    </style>
+    /* Controls */
+    .controls { padding: 16px 0 0; }
+    .controls-top {
+      display: flex; gap: 10px; align-items: center;
+      margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .live-search { flex: 1; min-width: 180px; position: relative; }
+    .live-search svg {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: var(--ink-3); pointer-events: none;
+    }
+    .live-search input {
+      width: 100%; padding: 9px 12px 9px 34px;
+      border: 1px solid var(--border-md); border-radius: 4px;
+      font-family: var(--sans); font-size: 13px; color: var(--ink);
+      background: #fff; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .live-search input::placeholder { color: var(--ink-3); }
+    .live-search input:focus {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(26,26,24,0.07);
+    }
+    .result-count { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+
+    .filter-row {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    }
+    .filter-pill {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 5px 13px; border-radius: 2px;
+      border: 1px solid var(--border-md); background: transparent;
+      color: var(--ink-3); cursor: pointer; font-family: var(--sans);
+      transition: all 0.12s;
+    }
+    .filter-pill:hover { border-color: var(--ink); color: var(--ink); }
+    .filter-pill.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+    /* Articles */
+    .article-list { list-style: none; }
+    .article-item { border-bottom: 1px solid var(--border); padding: 22px 0; }
+    .article-item:last-child { border-bottom: none; }
+    .article-item.hidden { display: none; }
+
+    .article-meta {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 2px;
+      border: 1px solid var(--border-md); color: var(--ink-2); background: var(--surface);
+    }
+    .article-num { font-size: 11px; color: var(--ink-3); }
+
+    .article-title {
+      font-family: var(--serif);
+      font-size: clamp(18px, 2.5vw, 22px);
+      font-weight: 400; line-height: 1.25; margin-bottom: 10px;
+    }
+    .article-title a { color: var(--ink); text-decoration: none; }
+    .article-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+    mark { background: #f5e16a; color: var(--ink); border-radius: 2px; padding: 0 1px; }
+
+    .article-summary {
+      font-size: 13.5px; color: var(--ink-2); line-height: 1.65;
+      margin-bottom: 12px; max-width: 560px;
+    }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 11px; color: var(--ink-3);
+      padding: 2px 8px; border: 1px solid var(--border); border-radius: 2px;
+    }
+
+    /* Empty / no-results */
+    .empty, .no-results {
+      padding: 56px 0; text-align: center; color: var(--ink-3);
+    }
+    .empty-mark {
+      font-family: var(--serif); font-size: 48px;
+      line-height: 1; margin-bottom: 12px; opacity: 0.25;
+    }
+    .empty p, .no-results p { font-size: 14px; }
+    .no-results { display: none; }
+
+    .ornament {
+      text-align: center; color: var(--ink-3);
+      font-size: 13px; letter-spacing: 0.3em;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+
+    footer {
+      text-align: center; padding: 32px 0 48px;
+      font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em;
+    }
+
+    @media (max-width: 520px) {
+      .controls-top { flex-direction: column; align-items: stretch; }
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="hero-section text-center mb-5 shadow">
-    <div class="container">
-        <h1 class="display-5 fw-bold">🚀 AI Content Intelligence</h1>
-        <p class="lead">Parsing RSS feeds into structured insights</p>
-    </div>
-</div>
+<header class="masthead">
+  <div class="container">
+    <p class="masthead-eyebrow">AI-Powered RSS Intelligence</p>
+    <h1 class="masthead-title">Feed Analyzer</h1>
+    <p class="masthead-sub">Paste any RSS URL — get structured insights instantly</p>
+  </div>
+</header>
 
-<div class="container">
+<main class="container">
 
-    <!-- 🔍 Form -->
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <form method="POST" class="input-group input-group-lg shadow-sm mb-4" id="analyzerForm">
-                <input type="text" name="rss_url" class="form-control"
-                       placeholder="Paste RSS URL (e.g. https://techcrunch.com/feed/)" required>
+  <div class="rss-wrap">
+    <form class="rss-row" method="POST" id="analyzerForm">
+      <input
+        type="text"
+        name="rss_url"
+        placeholder="https://techcrunch.com/feed/"
+        autocomplete="off"
+        spellcheck="false"
+        required
+      >
+      <button type="submit" id="btnSubmit">
+        <span id="btnText">Analyze</span>
+        <span class="spinner" id="spinner"></span>
+      </button>
+    </form>
+  </div>
 
-                <button class="btn btn-dark px-4" type="submit" id="btnSubmit">
-                    <span id="btnText">Analyze</span>
-                    <div id="spinner" class="spinner-border spinner-border-sm d-none"></div>
-                </button>
-            </form>
+  {% if articles|length > 0 %}
 
-            <h4 class="mb-4">Top Analyzed Articles</h4>
-
-            <!-- ❗ Empty state -->
-            {% if articles|length == 0 %}
-                <div class="text-center text-muted">
-                    <p>No articles yet. Enter an RSS feed to begin.</p>
-                </div>
-            {% endif %}
-
-            <!-- 📄 Articles -->
-            {% for article in articles %}
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-
-                    <span class="badge badge-category mb-2 me-2">
-                        {{ article.category }}
-                    </span>
-
-                    <h3 class="h4">
-                        <a href="{{ article.link }}" target="_blank"
-                           class="text-decoration-none text-dark fw-bold">
-                            {{ article.title }}
-                        </a>
-                    </h3>
-
-                    <p class="text-muted mt-3">
-                        {{ article.summary }}
-                    </p>
-
-                    <!-- 🏷 Tags -->
-                    <div class="mt-2">
-                        {% for tag in article.tags.split(',') %}
-                            <span class="badge bg-light text-dark me-1">
-                                {{ tag }}
-                            </span>
-                        {% endfor %}
-                    </div>
-
-                </div>
-            </div>
-            {% endfor %}
-
-        </div>
+  <div class="controls">
+    <div class="controls-top">
+      <div class="live-search">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="6.5" cy="6.5" r="5"/><line x1="10.5" y1="10.5" x2="15" y2="15"/>
+        </svg>
+        <input type="text" id="liveSearch" placeholder="Search titles and summaries…" autocomplete="off">
+      </div>
+      <span class="result-count" id="resultCount"></span>
     </div>
 
-</div>
+    <div class="filter-row" id="filterRow">
+      <button class="filter-pill active" data-cat="all">All</button>
+      {%- set seen = namespace(cats=[]) -%}
+      {%- for article in articles -%}
+        {%- if article.category not in seen.cats -%}
+          {%- set seen.cats = seen.cats + [article.category] -%}
+          <button class="filter-pill" data-cat="{{ article.category }}">{{ article.category }}</button>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
 
-<!-- 🔻 Footer -->
-<footer class="text-center mt-5 text-muted">
-    <small>Built with Flask | AI-ready architecture</small>
+  <ul class="article-list" id="articleList">
+    {% for article in articles %}
+    <li class="article-item"
+        data-category="{{ article.category }}"
+        data-title="{{ article.title | lower }}"
+        data-summary="{{ article.summary | lower }}">
+
+      <div class="article-meta">
+        <span class="badge">{{ article.category }}</span>
+        <span class="article-num">#{{ loop.index }}</span>
+      </div>
+
+      <h2 class="article-title">
+        <a href="{{ article.link }}" target="_blank" rel="noopener" class="title-text">{{ article.title }}</a>
+      </h2>
+
+      <p class="article-summary summary-text">{{ article.summary }}</p>
+
+      <div class="tag-row">
+        {% for tag in article.tags.split(',') %}
+          <span class="tag">{{ tag.strip() }}</span>
+        {% endfor %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <div class="no-results" id="noResults"><p>No articles match your search.</p></div>
+  <div class="ornament" id="ornament">— end of results —</div>
+
+  {% else %}
+  <div class="empty">
+    <div class="empty-mark">✦</div>
+    <p>Enter an RSS feed URL above to begin analysis.</p>
+  </div>
+  {% endif %}
+
+</main>
+
+<footer>
+  <div class="container">Feed Analyzer &nbsp;·&nbsp; Built with Flask &nbsp;·&nbsp; AI-ready architecture</div>
 </footer>
 
-<!-- ⚡ Loading Script -->
 <script>
-document.getElementById('analyzerForm').onsubmit = function() {
-    document.getElementById('btnText').innerText = "Analyzing...";
-    document.getElementById('spinner').classList.remove('d-none');
+  document.getElementById('analyzerForm').addEventListener('submit', function () {
+    document.getElementById('btnText').textContent = 'Analyzing…';
+    document.getElementById('spinner').style.display = 'block';
     document.getElementById('btnSubmit').disabled = true;
-};
+  });
+
+  var items      = Array.from(document.querySelectorAll('.article-item'));
+  var searchEl   = document.getElementById('liveSearch');
+  var pills      = document.querySelectorAll('.filter-pill');
+  var noResults  = document.getElementById('noResults');
+  var ornament   = document.getElementById('ornament');
+  var countEl    = document.getElementById('resultCount');
+
+  if (!items.length || !searchEl) { /* nothing to wire up */ }
+  else {
+    var activeCategory = 'all';
+    var searchQuery    = '';
+
+    function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+    function highlight(text, q) {
+      if (!q) return text;
+      return text.replace(new RegExp('(' + escapeRegex(q) + ')', 'gi'), '<mark>$1</mark>');
+    }
+
+    function applyFilters() {
+      var q = searchQuery.trim().toLowerCase();
+      var visible = 0;
+
+      items.forEach(function (item) {
+        var catMatch  = activeCategory === 'all' || item.dataset.category === activeCategory;
+        var textMatch = !q || item.dataset.title.includes(q) || item.dataset.summary.includes(q);
+
+        var titleEl   = item.querySelector('.title-text');
+        var summaryEl = item.querySelector('.summary-text');
+
+        if (catMatch && textMatch) {
+          item.classList.remove('hidden');
+          visible++;
+          titleEl.innerHTML   = highlight(titleEl.textContent, q);
+          summaryEl.innerHTML = highlight(summaryEl.textContent, q);
+        } else {
+          item.classList.add('hidden');
+          titleEl.innerHTML   = titleEl.textContent;
+          summaryEl.innerHTML = summaryEl.textContent;
+        }
+      });
+
+      countEl.textContent    = visible < items.length ? visible + ' of ' + items.length + ' articles' : items.length + ' articles';
+      noResults.style.display = visible === 0 ? 'block' : 'none';
+      ornament.style.display  = visible === 0 ? 'none'  : 'block';
+    }
+
+    pills.forEach(function (pill) {
+      pill.addEventListener('click', function () {
+        pills.forEach(function (p) { p.classList.remove('active'); });
+        pill.classList.add('active');
+        activeCategory = pill.dataset.cat;
+        applyFilters();
+      });
+    });
+
+    searchEl.addEventListener('input', function () {
+      searchQuery = this.value;
+      applyFilters();
+    });
+
+    applyFilters();
+  }
 </script>
 
 </body>
+</html>
+
 </html>
